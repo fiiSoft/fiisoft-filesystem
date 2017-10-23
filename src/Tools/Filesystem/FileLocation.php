@@ -38,6 +38,30 @@ final class FileLocation
     
     /**
      * @param string $fileName
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     * @throws LogicException
+     * @return File|null
+     */
+    public function getFile($fileName)
+    {
+        $handler = $this->fileSystem()->get($fileName);
+        if ($handler->exists() && $handler->isFile()) {
+            return new File($this, [
+                'type' => $handler->getType(),
+                'timestamp' => $handler->getTimestamp(),
+                'size' => $handler->getSize(),
+                'filename' => pathinfo($fileName, PATHINFO_FILENAME),
+                'extension' => pathinfo($fileName, PATHINFO_EXTENSION),
+                'basename' => $fileName,
+            ]);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * @param string $fileName
      * @throws LogicException
      * @throws FileExistsException
      * @throws FileNotFoundException

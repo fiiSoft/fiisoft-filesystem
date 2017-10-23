@@ -116,7 +116,7 @@ final class FlysystemFactory
         
         if ($path !== '') {
             $path = ltrim($path, '\\/');
-            $adapter->setPathPrefix($path);
+            $adapter->setPathPrefix($root.$path);
         }
     
         return $adapter;

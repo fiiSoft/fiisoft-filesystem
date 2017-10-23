@@ -2,9 +2,9 @@
 
 namespace FiiSoft\Test\Tools\Filesystem;
 
+use FiiSoft\Tools\Filesystem\File;
 use FiiSoft\Tools\Filesystem\FileLocation;
 use FiiSoft\Tools\Filesystem\FileLocationConfig;
-use FiiSoft\Tools\Filesystem\File;
 
 class FileLocationTest extends \PHPUnit_Framework_TestCase
 {
@@ -111,5 +111,15 @@ class FileLocationTest extends \PHPUnit_Framework_TestCase
         $files = $this->fl->listFilesWithNamesStartingWith('other_', 'txt');
         $file = $files[0];
         self::assertSame($expected, $file->content);
+    }
+    
+    public function test_it_allows_to_get_particular_file_directly()
+    {
+        $file = $this->fl->getFile('file1.txt');
+        
+        self::assertInstanceOf(File::class, $file);
+        self::assertSame('file1.txt', $file->basename);
+        self::assertSame('file1', $file->name);
+        self::assertSame('txt', $file->ext);
     }
 }

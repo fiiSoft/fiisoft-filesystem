@@ -4,6 +4,7 @@ namespace FiiSoft\Tools\Filesystem;
 
 use Exception;
 use InvalidArgumentException;
+use LogicException;
 use RuntimeException;
 
 /**
@@ -37,26 +38,42 @@ final class File
     /** @var string */
     private $basename;
     
+    /** @var bool */
+    private $isLoaded = false;
+    
     /**
      * @param FileLocation $fileLocation
-     * @param array $fileInfo
+     * @param array|string $fileInfo array with data about file or file name to read from fileLocation
      * @throws InvalidArgumentException
      * @throws RuntimeException
+     * @throws LogicException
      */
-    public function __construct(FileLocation $fileLocation, array $fileInfo)
+    public function __construct(FileLocation $fileLocation, $fileInfo)
     {
         $this->fileLocation = $fileLocation;
-        $this->validateAndSetFileInfo($fileInfo);
+    
+        if (is_array($fileInfo)) {
+            $this->validateAndSetFileInfo($fileInfo);
+        } elseif (is_string($fileInfo) && $fileInfo !== '') {
+            $this->basename = $fileInfo;
+        } else {
+            throw new InvalidArgumentException('Invalid param fileInfo');
+        }
     }
     
     /**
      * @param string $name
      * @throws InvalidArgumentException
      * @throws RuntimeException
+     * @throws LogicException
      * @return mixed
      */
     public function __get($name)
     {
+        if (!$this->isLoaded) {
+            $this->load();
+        }
+        
         switch ($name) {
             case 'basename': return $this->basename;
             case 'name': return $this->name;
@@ -74,6 +91,41 @@ final class File
             default:
                 throw new InvalidArgumentException('There is no property "'.$name.'" in '.__CLASS__);
         }
+    }
+    
+    /**
+     *
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     * @throws LogicException
+     * @return void
+     */
+    private function load()
+    {
+        if ($this->isLoaded) {
+            throw new RuntimeException('File is already loaded');
+        }
+        
+        $file = $this->fileLocation->getFile($this->basename);
+        if (!$file) {
+            throw new RuntimeException('File '.$this->fileLocation->getFileUrl($this->basename).' is not available');
+        }
+        
+        $this->copyFromFile($file);
+        $this->isLoaded = true;
+    }
+    
+    /**
+     * @param File $file
+     * @return void
+     */
+    private function copyFromFile(File $file)
+    {
+        $this->basename = $file->basename;
+        $this->name = $file->name;
+        $this->ext = $file->ext;
+        $this->size = $file->size;
+        $this->timestamp = $file->timestamp;
     }
     
     /**
@@ -111,5 +163,7 @@ final class File
         if ($this->ext !== '' && $this->basename !== $this->name.'.'.$this->ext) {
             throw new InvalidArgumentException('Invalid param fileInfo');
         }
+        
+        $this->isLoaded = true;
     }
 }
